@@ -3,6 +3,7 @@ import re
 atomic_masses = {
     "H": 1.008,
     "C": 12.011,
+    "Al": 26.982,
     "N": 14.007,
     "O": 15.999,
     "Na": 22.990,
@@ -16,25 +17,76 @@ atomic_masses = {
 
 
 def calculate_molar_mass(formula):
-    pattern = r"([A-Z][a-z]?)(\d*)"
-    matches = re.findall(pattern, formula)
+    if not formula:
+        raise ValueError("Chemical formula cannot be empty.")
 
-    if not matches or "".join(
-        element + number for element, number in matches
-    ) != formula:
+    tokens = re.findall(r"[A-Z][a-z]?|\d+|[()]", formula)
+
+    if "".join(tokens) != formula:
         raise ValueError("Invalid chemical formula.")
 
-    total_mass = 0
+    position = 0
 
-    for element, number in matches:
-        if element not in atomic_masses:
-            raise ValueError(f"Unknown element: {element}")
+    def parse_group():
+        nonlocal position
+        total_mass = 0
 
-        count = int(number) if number else 1
-        total_mass += atomic_masses[element] * count
+        while position < len(tokens):
+            token = tokens[position]
+
+            if token == ")":
+                break
+
+            if token == "(":
+                position += 1
+                group_mass = parse_group()
+
+                if position >= len(tokens) or tokens[position] != ")":
+                    raise ValueError("Unmatched opening parenthesis.")
+
+                position += 1
+                multiplier = 1
+
+                if position < len(tokens) and tokens[position].isdigit():
+                    multiplier = int(tokens[position])
+                    position += 1
+
+                if multiplier < 1:
+                    raise ValueError("Multipliers must be positive.")
+
+                total_mass += group_mass * multiplier
+
+            elif token.isdigit():
+                raise ValueError("Unexpected number in formula.")
+
+            else:
+                element = token
+                position += 1
+
+                if element not in atomic_masses:
+                    raise ValueError(f"Unknown element: {element}")
+
+                count = 1
+
+                if position < len(tokens) and tokens[position].isdigit():
+                    count = int(tokens[position])
+                    position += 1
+
+                if count < 1:
+                    raise ValueError("Atom counts must be positive.")
+
+                total_mass += atomic_masses[element] * count
+
+        return total_mass
+
+    total_mass = parse_group()
+
+    if position != len(tokens):
+        if tokens[position] == ")":
+            raise ValueError("Unmatched closing parenthesis.")
+        raise ValueError("Invalid chemical formula.")
 
     return total_mass
-
 
 def calculate_concentration(mass, molar_mass, volume):
     if mass <= 0 or molar_mass <= 0 or volume <= 0:
