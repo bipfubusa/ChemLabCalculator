@@ -8,8 +8,8 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
 
 version = 1.0.0
-head -2 .github/workflows/build.yml
-head -1 buildozer.spec
+
+requirements = python3,kivy==2.3.0
 
 orientation = portrait
 fullscreen = 0
