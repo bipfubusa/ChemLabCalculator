@@ -1,5 +1,3 @@
-cd ~/chemistry_calculator
-cat > buildozer.spec << 'EOF'
 [app]
 
 title = ChemLab Calculator
@@ -27,4 +25,3 @@ android.allow_backup = False
 
 log_level = 2
 warn_on_root = 1
-EOF
